@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<application
+		android:allowBackup="true"
+		android:icon="@mipmap/appicon"
+		android:roundIcon="@mipmap/appicon_round"
+		android:supportsRtl="true"
+		android:label="Fairy AI">
+	</application>
+
+	<!-- Network -->
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.INTERNET" />
+
+	<!-- Microphone (ASR) -->
+	<uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+	<!-- Bluetooth (PC sync) -->
+	<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+	<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+
+	<!-- Location (needed for BLE scan on Android 12+) -->
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+	<!-- Overlay (floating bubble) -->
+	<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+	<!-- Foreground service (persistent notification) -->
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+	<!-- LocalSend (multicast, WiFi) -->
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+	<uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
+</manifest>

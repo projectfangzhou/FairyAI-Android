@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:FairyAI_Android.ViewModels"
+             xmlns:models="clr-namespace:FairyAI_Android.Models"
+             x:Class="FairyAI_Android.Pages.ChatPage"
+             x:DataType="vm:MainViewModel"
+             BackgroundColor="#1a1a2e"
+             Title="Fairy AI">
+
+    <Grid RowDefinitions="*,Auto,Auto">
+
+        <!-- Messages -->
+        <CollectionView Grid.Row="0"
+                        ItemsSource="{Binding Messages}"
+                        SelectionMode="None"
+                        VerticalOptions="Fill">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:ChatMessage">
+                    <Grid Padding="8,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- User message (right) -->
+                        <Border Grid.Column="1"
+                                BackgroundColor="#7b68ee"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="12,8"
+                                MaximumWidthRequest="280"
+                                HorizontalOptions="End">
+                            <Label Text="{Binding Content}"
+                                   TextColor="White"
+                                   FontSize="15"/>
+                        </Border>
+
+                        <!-- Assistant message (left) -->
+                        <Border Grid.Column="0"
+                                BackgroundColor="#2a2a3e"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="12,8"
+                                MaximumWidthRequest="280"
+                                HorizontalOptions="Start">
+                            <Label Text="{Binding Content}"
+                                   TextColor="#e0e0e0"
+                                   FontSize="15"/>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Status -->
+        <Label Grid.Row="1"
+               Text="{Binding StatusText}"
+               TextColor="#666"
+               FontSize="12"
+               HorizontalTextAlignment="Center"
+               Margin="16,4"/>
+
+        <!-- Input bar + wake word toggle -->
+        <VerticalStackLayout Grid.Row="2" Spacing="4">
+
+            <!-- Wake word status -->
+            <HorizontalStackLayout Margin="16,0,16,4" Spacing="8"
+                                   IsVisible="{Binding IsWakeWordActive}">
+                <Label Text="🎙" FontSize="14"/>
+                <Label Text="{Binding WakeWordText}" TextColor="#7b68ee" FontSize="12"
+                       LineBreakMode="TailTruncation" MaxLines="1" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+
+            <Grid Padding="12,0,12,16" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+
+                <Button Grid.Column="0"
+                        x:Name="WakeWordBtn"
+                        Text="🎙"
+                        WidthRequest="40" HeightRequest="40"
+                        FontSize="18"
+                        BackgroundColor="#2a2a3e"
+                        TextColor="#aaa"
+                        Command="{Binding ToggleWakeWordCommand}"/>
+
+                <Border Grid.Column="1"
+                        BackgroundColor="#2a2a3e"
+                        StrokeShape="RoundRectangle 20"
+                        Stroke="#444"
+                        Padding="2">
+                    <Entry Text="{Binding UserInput}"
+                           Placeholder="输入消息..."
+                           PlaceholderColor="#666"
+                           TextColor="#e0e0e0"
+                           BackgroundColor="Transparent"
+                           FontSize="15"
+                           ReturnCommand="{Binding SendMessageCommand}"/>
+                </Border>
+
+                <Button Grid.Column="2"
+                        Text="🎤" WidthRequest="40" HeightRequest="40"
+                        BackgroundColor="#2a2a3e" TextColor="#aaa" FontSize="20"
+                        Command="{Binding StartListeningCommand}"
+                        IsEnabled="{Binding IsProcessing, Converter={StaticResource InvertBool}}"/>
+
+                <Button Grid.Column="3"
+                        Text="➤" WidthRequest="40" HeightRequest="40"
+                        BackgroundColor="#7b68ee" TextColor="White" FontSize="20"
+                        Command="{Binding SendMessageCommand}"
+                        IsEnabled="{Binding IsProcessing, Converter={StaticResource InvertBool}}"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Grid>
+
+</ContentPage>

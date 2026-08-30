@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="FairyAI_Android.Pages.SettingsPage"
+             BackgroundColor="#1a1a2e"
+             Title="设置">
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Label Text="AI 人格" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Label Text="角色名称:" TextColor="#aaa" FontSize="13"/>
+            <Entry x:Name="PersonalityNameEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Text="Fairy"/>
+            <Label Text="系统提示词:" TextColor="#aaa" FontSize="13"/>
+            <Editor x:Name="PersonalityPromptEditor" BackgroundColor="#2a2a3e" TextColor="#ddd" HeightRequest="120" FontSize="13"/>
+            <Label Text="语言:" TextColor="#aaa" FontSize="13"/>
+            <Picker x:Name="LanguagePicker" BackgroundColor="#2a2a3e" TextColor="#ddd"/>
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox x:Name="EnableEmotionCheckBox" IsChecked="True"/>
+                <Label Text="情感表达" TextColor="#aaa" FontSize="12" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+
+            <Label Text="LLM" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Picker x:Name="LLMProviderPicker" BackgroundColor="#2a2a3e" TextColor="#ddd"/>
+            <Entry x:Name="LLMApiKeyEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" IsPassword="True" Placeholder="API Key"/>
+
+            <Label Text="TTS" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Picker x:Name="TTSProviderPicker" BackgroundColor="#2a2a3e" TextColor="#ddd" SelectedIndexChanged="OnTTSProviderChanged"/>
+            <Picker x:Name="TTSVoicePicker" BackgroundColor="#2a2a3e" TextColor="#ddd"/>
+            <Entry x:Name="TTSApiKeyEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" IsPassword="True" Placeholder="TTS API Key"/>
+            <Button Text="测试语音" BackgroundColor="#333" TextColor="#aaa" Clicked="OnTestTts"/>
+            <Label x:Name="TtsStatus" Text="" TextColor="#666" FontSize="11"/>
+
+            <Label Text="唤醒词" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Label Text="说出唤醒词后 AI 自动开始聆听指令" TextColor="#888" FontSize="12"/>
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox x:Name="WakeWordEnabledCheckBox" IsChecked="False"/>
+                <Label Text="启用唤醒词" TextColor="#aaa" FontSize="12" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+            <Label Text="唤醒词:" TextColor="#aaa" FontSize="13"/>
+            <Entry x:Name="WakeWordEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="默认: 小精灵"/>
+            <Label Text="备用唤醒词 (逗号分隔):" TextColor="#aaa" FontSize="13"/>
+            <Entry x:Name="WakeWordAltEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="例: 小助手,Fairy"/>
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox x:Name="WakeWordTtsCheckBox" IsChecked="True"/>
+                <Label Text="唤醒后语音回应" TextColor="#aaa" FontSize="12" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+            <Entry x:Name="WakeWordFeedbackEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="回应语: 我在"/>
+
+            <Label Text="PC 连接" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Button x:Name="StartLocalSendBtn" Text="启动" BackgroundColor="#40e0d0" TextColor="White" Clicked="OnStartLocalSend"/>
+            <Button x:Name="DiscoverDevicesBtn" Text="搜索设备" BackgroundColor="#333" TextColor="#aaa" Clicked="OnDiscoverDevices"/>
+            <Entry x:Name="RemoteDeviceEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="IP:端口"/>
+            <Button Text="添加远程设备" BackgroundColor="#40e0d0" TextColor="White" Clicked="OnAddRemoteDevice"/>
+            <CollectionView x:Name="DevicesList" HeightRequest="150" SelectionMode="Single"/>
+            <Entry x:Name="PairingCodeEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="6位配对码" MaxLength="6" Keyboard="Numeric"/>
+            <Button Text="配对" BackgroundColor="#7b68ee" TextColor="White" Clicked="OnPairDevice"/>
+            <Button Text="同步配置" BackgroundColor="#40e0d0" TextColor="White" Clicked="OnSyncDevice"/>
+            <Label x:Name="LocalSendStatus" Text="" TextColor="#666" FontSize="11"/>
+
+            <Label Text="设备名称:" TextColor="#aaa" FontSize="13"/>
+            <Entry x:Name="DeviceNameEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Text="FairyAI-Android"/>
+
+            <Button Text="保存" BackgroundColor="#7b68ee" TextColor="White" HeightRequest="48" Clicked="OnSaveClicked"/>
+            <Button Text="测试 LLM" BackgroundColor="#333" TextColor="#aaa" HeightRequest="48" Clicked="OnTestClicked"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

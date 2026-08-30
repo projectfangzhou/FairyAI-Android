@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:pages="clr-namespace:FairyAI_Android.Pages"
+       x:Class="FairyAI_Android.AppShell"
+       Shell.FlyoutBehavior="Disabled"
+       Shell.BackgroundColor="#1a1a2e"
+       Shell.ForegroundColor="#7b68ee"
+       Shell.TabBarBackgroundColor="#1a1a2e"
+       Shell.TabBarForegroundColor="#7b68ee">
+
+    <TabBar>
+        <ShellContent Title="对话"
+                      ContentTemplate="{DataTemplate pages:ChatPage}"
+                      Icon="{OnPlatform iOS='chat_bubble'}"/>
+        <ShellContent Title="设置"
+                      ContentTemplate="{DataTemplate pages:SettingsPage}"
+                      Icon="{OnPlatform iOS='settings'}"/>
+    </TabBar>
+
+</Shell>
