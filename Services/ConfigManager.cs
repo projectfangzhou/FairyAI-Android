@@ -14,6 +14,9 @@ public class AppConfig
     public SyncConfig Sync { get; set; } = new();
     public PersonalityConfig Personality { get; set; } = new();
     public WakeWordConfig WakeWord { get; set; } = new();
+    public ContextConfig Context { get; set; } = new();
+    public PerformanceConfig Performance { get; set; } = new();
+    public CustomPlatformConfig CustomPlatform { get; set; } = new();
 }
 
 public class LLMConfig
@@ -38,6 +41,34 @@ public class TTSConfig
     public string BaseUrl { get; set; } = "";
     public string Model { get; set; } = "";
     public string Voice { get; set; } = "";
+    public string VoiceCloneAudioPath { get; set; } = "";
+    public string VoiceClonePromptText { get; set; } = "";
+    public string VoiceCloneLang { get; set; } = "zh";
+}
+
+public class ContextConfig
+{
+    public bool Enabled { get; set; } = true;
+    public int AutoCompressTokens { get; set; } = 256000;
+    public string LastSyncDate { get; set; } = "";
+}
+
+public class PerformanceConfig
+{
+    public string Mode { get; set; } = "balanced";
+    public bool AutoDetectGames { get; set; } = true;
+}
+
+public class CustomPlatformConfig
+{
+    public bool Enabled { get; set; } = false;
+    public string TextBaseUrl { get; set; } = "";
+    public string TextModel { get; set; } = "";
+    public string TextApiKey { get; set; } = "";
+    public bool MultimodalEnabled { get; set; } = false;
+    public string MultimodalBaseUrl { get; set; } = "";
+    public string MultimodalModel { get; set; } = "";
+    public string MultimodalApiKey { get; set; } = "";
 }
 
 public class VisionConfig
@@ -69,6 +100,9 @@ public class PersonalityConfig
     public string AvatarUrl { get; set; } = "";
     public string Language { get; set; } = "zh-CN";
     public bool EnableEmotion { get; set; } = true;
+    public string IdleSoundStyle { get; set; } = "gentle";
+    public bool IsGameCharacter { get; set; } = false;
+    public string GameCharacterName { get; set; } = "";
 }
 
 public static class ConfigManager
@@ -82,6 +116,8 @@ public static class ConfigManager
         ["DeepSeek"] = ("https://api.deepseek.com/v1/chat/completions", "deepseek-chat"),
         ["MiMo"] = ("https://api.xiaomimimo.com/v1/chat/completions", "mimo-v2.5"),
         ["OpenAI"] = ("https://api.openai.com/v1/chat/completions", "gpt-4o-mini"),
+        ["OpenRouter"] = ("https://openrouter.ai/api/v1/chat/completions", "openai/gpt-4o-mini"),
+        ["自定义平台"] = ("", "custom"),
     };
 
     public static readonly Dictionary<string, (string BaseUrl, string Model, string[] Voices)> TTSProviders = new()
@@ -97,6 +133,10 @@ public static class ConfigManager
             new[] { "zh-CN-XiaoxiaoNeural", "zh-CN-YunxiNeural", "zh-CN-XiaoyiNeural", "en-US-JennyNeural" }),
         ["Google TTS"] = ("https://texttospeech.googleapis.com/v1/text:synthesize", "",
             new[] { "zh-CN-Wavenet-A", "zh-CN-Wavenet-B", "en-US-Wavenet-A" }),
+        ["GPT-SoVITS"] = ("http://localhost:9880/tts", "gpt-sovits",
+            new[] { "自定义" }),
+        ["OpenRouter"] = ("https://openrouter.ai/api/v1/audio/speech", "openai/tts-1",
+            new[] { "alloy", "echo", "fable", "onyx", "nova", "shimmer" }),
     };
 
     public static AppConfig Load()
