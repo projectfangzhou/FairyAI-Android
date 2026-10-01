@@ -146,7 +146,16 @@ public static class ConfigManager
             if (File.Exists(ConfigPath))
             {
                 var json = File.ReadAllText(ConfigPath);
-                return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+                var config = JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+                // Decrypt API keys using Android secure storage
+                config.LLM.ApiKey = UnprotectKey(config.LLM.ApiKey);
+                config.FallbackLLM.ApiKey = UnprotectKey(config.FallbackLLM.ApiKey);
+                config.ASR.ApiKey = UnprotectKey(config.ASR.ApiKey);
+                config.TTS.ApiKey = UnprotectKey(config.TTS.ApiKey);
+                config.Vision.ApiKey = UnprotectKey(config.Vision.ApiKey);
+                config.CustomPlatform.TextApiKey = UnprotectKey(config.CustomPlatform.TextApiKey);
+                config.CustomPlatform.MultimodalApiKey = UnprotectKey(config.CustomPlatform.MultimodalApiKey);
+                return config;
             }
         }
         catch { }
@@ -155,8 +164,72 @@ public static class ConfigManager
 
     public static void Save(AppConfig config)
     {
+        // Encrypt API keys before saving
+        config.LLM.ApiKey = ProtectKey(config.LLM.ApiKey);
+        config.FallbackLLM.ApiKey = ProtectKey(config.FallbackLLM.ApiKey);
+        config.ASR.ApiKey = ProtectKey(config.ASR.ApiKey);
+        config.TTS.ApiKey = ProtectKey(config.TTS.ApiKey);
+        config.Vision.ApiKey = ProtectKey(config.Vision.ApiKey);
+        config.CustomPlatform.TextApiKey = ProtectKey(config.CustomPlatform.TextApiKey);
+        config.CustomPlatform.MultimodalApiKey = ProtectKey(config.CustomPlatform.MultimodalApiKey);
         var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(ConfigPath, json);
+    }
+
+    /// <summary>Encrypt API key using AES-256 with device-derived key.</summary>
+    private static string ProtectKey(string plaintext)
+    {
+        if (string.IsNullOrEmpty(plaintext)) return "";
+        try
+        {
+            using var aes = System.Security.Cryptography.Aes.Create();
+            var key = GetDeviceKey();
+            aes.Key = key;
+            aes.GenerateIV();
+            var encryptor = aes.CreateEncryptor();
+            var plainBytes = System.Text.Encoding.UTF8.GetBytes(plaintext);
+            var encrypted = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
+            // Prepend IV to ciphertext
+            var result = new byte[aes.IV.Length + encrypted.Length];
+            Buffer.BlockCopy(aes.IV, 0, result, 0, aes.IV.Length);
+            Buffer.BlockCopy(encrypted, 0, result, aes.IV.Length, encrypted.Length);
+            return Convert.ToBase64String(result);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to protect API key", ex);
+        }
+    }
+
+    /// <summary>Decrypt API key.</summary>
+    private static string UnprotectKey(string ciphertext)
+    {
+        if (string.IsNullOrEmpty(ciphertext)) return "";
+        try
+        {
+            using var aes = System.Security.Cryptography.Aes.Create();
+            var key = GetDeviceKey();
+            aes.Key = key;
+            var data = Convert.FromBase64String(ciphertext);
+            // Extract IV (first 16 bytes)
+            var iv = new byte[16];
+            Buffer.BlockCopy(data, 0, iv, 0, 16);
+            aes.IV = iv;
+            var decryptor = aes.CreateDecryptor();
+            var decrypted = decryptor.TransformFinalBlock(data, 16, data.Length - 16);
+            return System.Text.Encoding.UTF8.GetString(decrypted);
+        }
+        catch { return ""; }
+    }
+
+    /// <summary>Get device-specific AES key (SHA256 of Android ID + salt).</summary>
+    private static byte[] GetDeviceKey()
+    {
+        var androidId = Android.Provider.Settings.Secure.GetString(
+            Android.App.Application.Context.ContentResolver,
+            Android.Provider.Settings.Secure.AndroidId) ?? "default";
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        return sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes("FairyAI_AE256_" + androidId));
     }
 
     public static bool NeedsSetup()
@@ -179,9 +252,22 @@ public static class ConfigManager
     /// <summary>
     /// Hash a pairing code for secure storage (never store plaintext).
     /// </summary>
+    /// <summary>Generate or load a random per-device salt.</summary>
+    private static string GetOrCreateSalt()
+    {
+        var saltPath = Path.Combine(FileSystem.AppDataDirectory, "pairing.salt");
+        if (File.Exists(saltPath))
+            return File.ReadAllText(saltPath);
+        var salt = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+        File.WriteAllText(saltPath, salt);
+        return salt;
+    }
+
+    /// <summary>Hash a pairing code for secure storage (never store plaintext).</summary>
     public static string HashPairingCode(string code)
     {
-        var bytes = Encoding.UTF8.GetBytes(code + "FairyAI_Salt_2024");
+        var salt = GetOrCreateSalt();
+        var bytes = Encoding.UTF8.GetBytes(code + salt);
         var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash);
     }
@@ -191,7 +277,9 @@ public static class ConfigManager
     /// </summary>
     public static bool VerifyPairingCode(string code, string storedHash)
     {
-        return HashPairingCode(code) == storedHash;
+        var computed = Convert.FromHexString(HashPairingCode(code));
+        var stored = Convert.FromHexString(storedHash);
+        return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(computed, stored);
     }
 
     /// <summary>

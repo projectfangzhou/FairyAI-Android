@@ -23,7 +23,8 @@
 		<ApplicationDisplayVersion>1.3.0A</ApplicationDisplayVersion>
 		<ApplicationVersion>130</ApplicationVersion>
 
-		<!-- Android -->
+		<AndroidSupportedAbis>arm64-v8a;x86_64</AndroidSupportedAbis>
+		<RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">23.0</SupportedOSPlatformVersion>
 
 		<!-- Android signing (optional, for release builds) -->

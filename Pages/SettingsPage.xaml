@@ -20,14 +20,50 @@
 
             <Label Text="LLM" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
             <Picker x:Name="LLMProviderPicker" BackgroundColor="#2a2a3e" TextColor="#ddd"/>
+            <Label Text="★ 模型名称 (必填):" TextColor="#ff6b6b" FontSize="13" FontAttributes="Bold"/>
+            <Entry x:Name="LLMModelNameEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="例: kimi-k2.6 / gpt-4o-mini"/>
             <Entry x:Name="LLMApiKeyEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" IsPassword="True" Placeholder="API Key"/>
+
+            <Label Text="备用 LLM (可选)" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Picker x:Name="FallbackLLMProviderPicker" BackgroundColor="#2a2a3e" TextColor="#ddd"/>
+            <Entry x:Name="FallbackLLMApiKeyEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" IsPassword="True" Placeholder="备用 API Key"/>
 
             <Label Text="TTS" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
             <Picker x:Name="TTSProviderPicker" BackgroundColor="#2a2a3e" TextColor="#ddd" SelectedIndexChanged="OnTTSProviderChanged"/>
+            <Label Text="★ TTS 模型名称 (必填):" TextColor="#ff6b6b" FontSize="13" FontAttributes="Bold"/>
+            <Entry x:Name="TTSModelNameEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="例: mi-tts-v2.5 / tts-1"/>
             <Picker x:Name="TTSVoicePicker" BackgroundColor="#2a2a3e" TextColor="#ddd"/>
             <Entry x:Name="TTSApiKeyEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" IsPassword="True" Placeholder="TTS API Key"/>
+            <Label Text="GPT-SoVITS 语音克隆:" TextColor="#7b68ee" FontSize="14" FontAttributes="Bold"/>
+            <Entry x:Name="VoiceClonePathEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="参考音频路径 (WAV/MP3)"/>
+            <Entry x:Name="VoiceClonePromptEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="声音描述 (可选)"/>
+            <Picker x:Name="VoiceCloneLangPicker" BackgroundColor="#2a2a3e" TextColor="#ddd"/>
             <Button Text="测试语音" BackgroundColor="#333" TextColor="#aaa" Clicked="OnTestTts"/>
             <Label x:Name="TtsStatus" Text="" TextColor="#666" FontSize="11"/>
+
+            <Label Text="上下文与性能" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox x:Name="ContextCompressionCheckBox" IsChecked="True"/>
+                <Label Text="上下文自动压缩 (256K)" TextColor="#aaa" FontSize="12" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+            <Label Text="性能模式:" TextColor="#aaa" FontSize="13"/>
+            <Picker x:Name="PerformanceModePicker" BackgroundColor="#2a2a3e" TextColor="#ddd"/>
+
+            <Label Text="中转网站 (跨网络同步)" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Entry x:Name="RelayUrlEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" Placeholder="Cloudflare Worker URL"/>
+            <Entry x:Name="RelaySecretEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" IsPassword="True" Placeholder="共享密钥"/>
+
+            <Label Text="B站学习" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Button Text="扫码登录B站" BackgroundColor="#fb7299" TextColor="White" Clicked="OnBiliLogin"/>
+            <Label x:Name="BiliLoginStatus" Text="" TextColor="#666" FontSize="11"/>
+
+            <Label Text="知识库" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Button Text="导入文档 (PPT/Word/PDF)" BackgroundColor="#333" TextColor="#aaa" Clicked="OnImportDocument"/>
+            <Label x:Name="KnowledgeStatus" Text="" TextColor="#666" FontSize="11"/>
+
+            <Label Text="屏幕自动化" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
+            <Button Text="开启无障碍权限" BackgroundColor="#40e0d0" TextColor="White" Clicked="OnEnableAccessibility"/>
+            <Label x:Name="ScreenStatus" Text="" TextColor="#666" FontSize="11"/>
 
             <Label Text="唤醒词" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
             <Label Text="说出唤醒词后 AI 自动开始聆听指令" TextColor="#888" FontSize="12"/>

@@ -35,6 +35,22 @@ public partial class SettingsPage : ContentPage
             foreach (var provider in ConfigManager.TTSProviders.Keys)
                 TTSProviderPicker.Items.Add(provider);
 
+            // Voice clone language
+            VoiceCloneLangPicker.Items.Add("zh");
+            VoiceCloneLangPicker.Items.Add("en");
+            VoiceCloneLangPicker.Items.Add("ja");
+            VoiceCloneLangPicker.SelectedIndex = 0;
+
+            // Performance mode
+            PerformanceModePicker.Items.Add("高性能");
+            PerformanceModePicker.Items.Add("均衡");
+            PerformanceModePicker.Items.Add("低占用");
+            PerformanceModePicker.SelectedIndex = 1;
+
+            // Fallback LLM providers
+            foreach (var provider in ConfigManager.LLMProviders.Keys)
+                FallbackLLMProviderPicker.Items.Add(provider);
+
             LoadConfig();
 
             DevicesList.SelectionChanged += OnDeviceSelected;
@@ -172,6 +188,12 @@ public partial class SettingsPage : ContentPage
 
     private async void OnSaveClicked(object? sender, EventArgs e)
     {
+        if (string.IsNullOrWhiteSpace(LLMModelNameEntry.Text))
+        {
+            await DisplayAlert("模型名称必填", "请填写文本模型名称", "确定");
+            return;
+        }
+
         var config = ConfigManager.Load();
         config.Personality.Name = PersonalityNameEntry.Text?.Trim() ?? "Fairy";
         config.Personality.SystemPrompt = PersonalityPromptEditor.Text?.Trim() ?? "";
@@ -179,11 +201,20 @@ public partial class SettingsPage : ContentPage
         config.Personality.EnableEmotion = EnableEmotionCheckBox.IsChecked;
         var llmP = LLMProviderPicker.SelectedItem?.ToString() ?? "Kimi";
         config.LLM.Provider = llmP; config.LLM.ApiKey = LLMApiKeyEntry.Text?.Trim() ?? "";
-        if (ConfigManager.LLMProviders.TryGetValue(llmP, out var lp)) { config.LLM.BaseUrl = lp.BaseUrl; config.LLM.Model = lp.Model; }
+        config.LLM.Model = LLMModelNameEntry.Text?.Trim() ?? "";
+        if (ConfigManager.LLMProviders.TryGetValue(llmP, out var lp)) { config.LLM.BaseUrl = lp.BaseUrl; }
+        config.FallbackLLM.ApiKey = FallbackLLMApiKeyEntry.Text?.Trim() ?? "";
         var ttsP = TTSProviderPicker.SelectedItem?.ToString() ?? "System";
         config.TTS.Provider = ttsP; config.TTS.ApiKey = TTSApiKeyEntry.Text?.Trim() ?? "";
+        config.TTS.Model = TTSModelNameEntry.Text?.Trim() ?? "";
         config.TTS.Voice = TTSVoicePicker.SelectedItem?.ToString() ?? "";
-        if (ConfigManager.TTSProviders.TryGetValue(ttsP, out var tp)) { config.TTS.BaseUrl = tp.BaseUrl; config.TTS.Model = tp.Model; }
+        config.TTS.VoiceCloneAudioPath = VoiceClonePathEntry.Text?.Trim() ?? "";
+        config.TTS.VoiceClonePromptText = VoiceClonePromptEntry.Text?.Trim() ?? "";
+        config.TTS.VoiceCloneLang = VoiceCloneLangPicker.SelectedItem?.ToString() ?? "zh";
+        if (ConfigManager.TTSProviders.TryGetValue(ttsP, out var tp)) { config.TTS.BaseUrl = tp.BaseUrl; }
+        config.Context.Enabled = ContextCompressionCheckBox.IsChecked;
+        config.Performance.Mode = PerformanceModePicker.SelectedIndex switch { 0 => "high", 1 => "balanced", 2 => "low", _ => "balanced" };
+        config.Sync.SignalRUrl = RelayUrlEntry.Text?.Trim() ?? "";
         config.Sync.DeviceName = DeviceNameEntry.Text?.Trim() ?? "FairyAI-Android";
 
         // Wake word
@@ -213,5 +244,38 @@ public partial class SettingsPage : ContentPage
             await DisplayAlertAsync("Test", r, "OK");
         }
         catch (Exception ex) { await DisplayAlertAsync("Error", ex.Message, "OK"); }
+    }
+
+    private async void OnBiliLogin(object? sender, EventArgs e)
+    {
+        BiliLoginStatus.Text = "正在获取二维码...";
+        var biliService = new BiliLoginService();
+        var (url, message) = await biliService.GetQRAsync();
+        BiliLoginStatus.Text = message;
+    }
+
+    private async void OnImportDocument(object? sender, EventArgs e)
+    {
+        try
+        {
+            var result = await FilePicker.PickAsync();
+            if (result != null)
+            {
+                var kb = new KnowledgeBaseService();
+                var text = await kb.AnalyzeDocumentAsync(result.FullPath);
+                KnowledgeStatus.Text = $"已导入: {result.FileName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            KnowledgeStatus.Text = $"错误: {ex.Message}";
+        }
+    }
+
+    private void OnEnableAccessibility(object? sender, EventArgs e)
+    {
+        var a11y = new AccessibilityService();
+        a11y.RequestPermission();
+        ScreenStatus.Text = "已打开无障碍设置";
     }
 }
