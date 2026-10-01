@@ -176,23 +176,26 @@ public static class ConfigManager
         File.WriteAllText(ConfigPath, json);
     }
 
-    /// <summary>Encrypt API key using AES-256 with device-derived key.</summary>
+    /// <summary>Encrypt API key using AES-256-GCM with PBKDF2-derived key.</summary>
     private static string ProtectKey(string plaintext)
     {
         if (string.IsNullOrEmpty(plaintext)) return "";
         try
         {
-            using var aes = System.Security.Cryptography.Aes.Create();
             var key = GetDeviceKey();
-            aes.Key = key;
-            aes.GenerateIV();
-            var encryptor = aes.CreateEncryptor();
+            var nonce = System.Security.Cryptography.RandomNumberGenerator.GetBytes(12);
+            var tag = new byte[16];
             var plainBytes = System.Text.Encoding.UTF8.GetBytes(plaintext);
-            var encrypted = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
-            // Prepend IV to ciphertext
-            var result = new byte[aes.IV.Length + encrypted.Length];
-            Buffer.BlockCopy(aes.IV, 0, result, 0, aes.IV.Length);
-            Buffer.BlockCopy(encrypted, 0, result, aes.IV.Length, encrypted.Length);
+            var encrypted = new byte[plainBytes.Length];
+
+            using var aes = new System.Security.Cryptography.AesGcm(key, tag.Length);
+            aes.Encrypt(nonce, plainBytes, encrypted, tag);
+
+            // Format: nonce(12) + tag(16) + ciphertext
+            var result = new byte[nonce.Length + tag.Length + encrypted.Length];
+            Buffer.BlockCopy(nonce, 0, result, 0, nonce.Length);
+            Buffer.BlockCopy(tag, 0, result, nonce.Length, tag.Length);
+            Buffer.BlockCopy(encrypted, 0, result, nonce.Length + tag.Length, encrypted.Length);
             return Convert.ToBase64String(result);
         }
         catch (Exception ex)
@@ -201,35 +204,46 @@ public static class ConfigManager
         }
     }
 
-    /// <summary>Decrypt API key.</summary>
+    /// <summary>Decrypt API key using AES-256-GCM.</summary>
     private static string UnprotectKey(string ciphertext)
     {
         if (string.IsNullOrEmpty(ciphertext)) return "";
         try
         {
-            using var aes = System.Security.Cryptography.Aes.Create();
             var key = GetDeviceKey();
-            aes.Key = key;
             var data = Convert.FromBase64String(ciphertext);
-            // Extract IV (first 16 bytes)
-            var iv = new byte[16];
-            Buffer.BlockCopy(data, 0, iv, 0, 16);
-            aes.IV = iv;
-            var decryptor = aes.CreateDecryptor();
-            var decrypted = decryptor.TransformFinalBlock(data, 16, data.Length - 16);
+            if (data.Length < 28) return "";
+
+            var nonce = new byte[12];
+            var tag = new byte[16];
+            Buffer.BlockCopy(data, 0, nonce, 0, 12);
+            Buffer.BlockCopy(data, 12, tag, 0, 16);
+            var encrypted = new byte[data.Length - 28];
+            Buffer.BlockCopy(data, 28, encrypted, 0, encrypted.Length);
+            var decrypted = new byte[encrypted.Length];
+
+            using var aes = new System.Security.Cryptography.AesGcm(key, tag.Length);
+            aes.Decrypt(nonce, encrypted, tag, decrypted);
             return System.Text.Encoding.UTF8.GetString(decrypted);
         }
         catch { return ""; }
     }
 
-    /// <summary>Get device-specific AES key (SHA256 of Android ID + salt).</summary>
+    /// <summary>Derive device key using PBKDF2 (100k iterations, SHA256).</summary>
     private static byte[] GetDeviceKey()
     {
         var androidId = Android.Provider.Settings.Secure.GetString(
             Android.App.Application.Context.ContentResolver,
-            Android.Provider.Settings.Secure.AndroidId) ?? "default";
-        using var sha = System.Security.Cryptography.SHA256.Create();
-        return sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes("FairyAI_AE256_" + androidId));
+            Android.Provider.Settings.Secure.AndroidId);
+        if (string.IsNullOrEmpty(androidId))
+            throw new InvalidOperationException("Cannot get Android ID for key derivation");
+
+        using var pbkdf2 = new System.Security.Cryptography.Rfc2898DeriveBytes(
+            "FairyAI_AE256_" + androidId,
+            System.Text.Encoding.UTF8.GetBytes("FairyAI_Salt_v2"),
+            100000,
+            System.Security.Cryptography.HashAlgorithmName.SHA256);
+        return pbkdf2.GetBytes(32);
     }
 
     public static bool NeedsSetup()

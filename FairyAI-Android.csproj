@@ -27,11 +27,11 @@
 		<RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">23.0</SupportedOSPlatformVersion>
 
-		<!-- Android signing (optional, for release builds) -->
-		<AndroidSigningKeyStore></AndroidSigningKeyStore>
-		<AndroidSigningStorePass></AndroidSigningStorePass>
-		<AndroidSigningKeyAlias></AndroidSigningKeyAlias>
-		<AndroidSigningKeyPass></AndroidSigningKeyPass>
+		<!-- Android signing (Release keystore) -->
+		<AndroidSigningKeyStore>D:\Dev\FairyAI-Android\fairyai-release.jks</AndroidSigningKeyStore>
+		<AndroidSigningStorePass>fairyai2026</AndroidSigningStorePass>
+		<AndroidSigningKeyAlias>fairyai</AndroidSigningKeyAlias>
+		<AndroidSigningKeyPass>fairyai2026</AndroidSigningKeyPass>
 	</PropertyGroup>
 
 	<ItemGroup>
