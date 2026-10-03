@@ -1,4 +1,4 @@
-// NoteService — real SQLite-based note storage
+﻿// NoteService 鈥?real SQLite-based note storage
 // Ported from PC MyAiAssistant/Services/NoteService.cs
 
 using System.IO;
@@ -242,7 +242,7 @@ public class TokenUsageService
     }
 }
 
-/// <summary>Important info extraction service — regex-based date/address extraction.</summary>
+/// <summary>Important info extraction service 鈥?regex-based date/address extraction.</summary>
 public class ImportantInfoService
 {
     private readonly KnowledgeBaseService _kb;
@@ -256,19 +256,19 @@ public class ImportantInfoService
         var extracted = new List<string>();
 
         // Extract dates
-        var datePattern = @"(\d{4}[-/年]\d{1,2}[-/月]\d{1,2}[日]?)|(\d{1,2}[-/月]\d{1,2}[日]?)|((今天|明天|后天|昨天|前天|周[一二三四五六日天]|星期[一二三四五六日天])[\s]*(上午|下午|晚上|中午)?)";
+        var datePattern = @"(\d{4}[-/骞碷\d{1,2}[-/鏈圿\d{1,2}[鏃?)|(\d{1,2}[-/鏈圿\d{1,2}[鏃?)|((浠婂ぉ|鏄庡ぉ|鍚庡ぉ|鏄ㄥぉ|鍓嶅ぉ|鍛╗涓€浜屼笁鍥涗簲鍏棩澶|鏄熸湡[涓€浜屼笁鍥涗簲鍏棩澶)[\s]*(涓婂崍|涓嬪崍|鏅氫笂|涓崍)?)";
         foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text, datePattern))
-            extracted.Add($"日期: {m.Value}");
+            extracted.Add($"鏃ユ湡: {m.Value}");
 
         // Extract phone numbers
         var phonePattern = @"(1[3-9]\d{9})|(\d{3,4}-\d{7,8})";
         foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text, phonePattern))
-            extracted.Add($"电话: {m.Value}");
+            extracted.Add($"鐢佃瘽: {m.Value}");
 
         // Extract addresses
-        var addrPattern = @"([一-龥]+(省|市|区|县|镇|街|路|号|栋|室))";
+        var addrPattern = @"([涓€-榫+(鐪亅甯倈鍖簗鍘縷闀噟琛梶璺瘄鍙穦鏍媩瀹?)";
         foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text, addrPattern))
-            extracted.Add($"地址: {m.Value}");
+            extracted.Add($"鍦板潃: {m.Value}");
 
         if (extracted.Count > 0)
         {
@@ -278,7 +278,7 @@ public class ImportantInfoService
             return content;
         }
 
-        return "未找到重要信息";
+        return "No important info found";
     }
 
     private static void Log(string msg)
@@ -286,3 +286,4 @@ public class ImportantInfoService
         try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss}] [INFO] {msg}\n"); } catch { }
     }
 }
+
