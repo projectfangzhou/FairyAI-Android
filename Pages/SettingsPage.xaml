@@ -54,7 +54,13 @@
             <Entry x:Name="RelaySecretEntry" BackgroundColor="#2a2a3e" TextColor="#ddd" IsPassword="True" Placeholder="共享密钥"/>
 
             <Label Text="B站学习" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>
-            <Button Text="扫码登录B站" BackgroundColor="#fb7299" TextColor="White" Clicked="OnBiliLogin"/>
+            <Button Text="获取B站登录二维码" BackgroundColor="#fb7299" TextColor="White" Clicked="OnBiliLogin"/>
+            <Border x:Name="BiliQRBorder" HeightRequest="200" WidthRequest="200" BackgroundColor="#2a2a3e" 
+                    Stroke="#444" StrokeThickness="1" HorizontalOptions="Center">
+                <Image x:Name="BiliQRImage" Aspect="AspectFit" IsVisible="False"/>
+                <Label x:Name="BiliQRPlaceholder" Text="点击按钮获取二维码" TextColor="#666" 
+                       HorizontalOptions="Center" VerticalOptions="Center"/>
+            </Border>
             <Label x:Name="BiliLoginStatus" Text="" TextColor="#666" FontSize="11"/>
 
             <Label Text="知识库" TextColor="#7b68ee" FontSize="16" FontAttributes="Bold"/>

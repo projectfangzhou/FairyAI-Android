@@ -248,27 +248,91 @@ public partial class SettingsPage : ContentPage
 
     private async void OnBiliLogin(object? sender, EventArgs e)
     {
+        // Source: https://github.com/xiaoyaya191/bilibili_learning_bot.git
         BiliLoginStatus.Text = "正在获取二维码...";
-        var biliService = new BiliLoginService();
-        var (url, message) = await biliService.GetQRAsync();
-        BiliLoginStatus.Text = message;
+        BiliLoginStatus.TextColor = Colors.Yellow;
+
+        try
+        {
+            var biliService = new BiliLoginService();
+            var (qrUrl, qrKey, message) = await biliService.GetQRAsync();
+
+            if (!string.IsNullOrEmpty(qrUrl))
+            {
+                // Generate QR code image from URL
+                var qrImage = GenerateQRCode(qrUrl);
+                BiliQRImage.Source = qrImage;
+                BiliQRImage.IsVisible = true;
+                BiliQRPlaceholder.IsVisible = false;
+
+                BiliLoginStatus.Text = message;
+                BiliLoginStatus.TextColor = Colors.LimeGreen;
+
+                // Start polling for login status
+                _ = Task.Run(async () =>
+                {
+                    for (int i = 0; i < 30; i++)
+                    {
+                        await Task.Delay(10000);
+                        var (ok, msg) = await biliService.PollAsync(qrKey);
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            BiliLoginStatus.Text = msg;
+                            BiliLoginStatus.TextColor = ok ? Colors.LimeGreen : Colors.Yellow;
+                        });
+                        if (ok) break;
+                    }
+                });
+            }
+            else
+            {
+                BiliLoginStatus.Text = message;
+                BiliLoginStatus.TextColor = Colors.OrangeRed;
+            }
+        }
+        catch (Exception ex)
+        {
+            BiliLoginStatus.Text = $"错误: {ex.Message}";
+            BiliLoginStatus.TextColor = Colors.OrangeRed;
+        }
+    }
+
+    private ImageSource GenerateQRCode(string text)
+    {
+        // Generate QR code bitmap from text
+        // Using a simple QR code rendering
+        var qrService = new Services.QRCodeGenerator();
+        return qrService.Generate(text, 200);
     }
 
     private async void OnImportDocument(object? sender, EventArgs e)
     {
         try
         {
-            var result = await FilePicker.PickAsync();
+            // Open file manager to select document
+            var result = await FilePicker.PickAsync(new PickOptions
+            {
+                PickerTitle = "选择文档 (PPT/Word/PDF)",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.Android, new[] { "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.presentationml.presentation" } },
+                    { DevicePlatform.iOS, new[] { "com.adobe.pdf", "org.openxmlformats.wordprocessingml.document" } },
+                    { DevicePlatform.MacCatalyst, new[] { "com.adobe.pdf", "org.openxmlformats.wordprocessingml.document" } },
+                })
+            });
+
             if (result != null)
             {
                 var kb = new KnowledgeBaseService();
                 var text = await kb.AnalyzeDocumentAsync(result.FullPath);
                 KnowledgeStatus.Text = $"已导入: {result.FileName}";
+                KnowledgeStatus.TextColor = Colors.LimeGreen;
             }
         }
         catch (Exception ex)
         {
             KnowledgeStatus.Text = $"错误: {ex.Message}";
+            KnowledgeStatus.TextColor = Colors.OrangeRed;
         }
     }
 

@@ -18,6 +18,15 @@ public class KnowledgeBaseService
 
     public string KbFolder => _kbFolder;
 
+    /// <summary>Save important extracted info.</summary>
+    public async Task SaveImportantInfoAsync(string category, string content)
+    {
+        var date = DateTime.Now.ToString("yyyy-MM-dd");
+        var filePath = Path.Combine(_kbFolder, $"{category}_{date}.md");
+        var entry = $"## {DateTime.Now:HH:mm}\n{content}\n\n";
+        await File.AppendAllTextAsync(filePath, entry);
+    }
+
     public async Task<string> AnalyzeDocumentAsync(string filePath)
     {
         if (!File.Exists(filePath)) return "文件不存在";
