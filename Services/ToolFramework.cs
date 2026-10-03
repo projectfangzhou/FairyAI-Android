@@ -1,11 +1,11 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using FairyAI_Android.Models;
 
 namespace FairyAI_Android.Services;
 
 /// <summary>
-/// Android Tool Registry — manages AI tools for Function Calling.
+/// Android Tool Registry 鈥?manages AI tools for Function Calling.
 /// </summary>
 public class ToolRegistry
 {
@@ -32,7 +32,7 @@ public class ToolParameter
 }
 
 /// <summary>
-/// Android Function Calling Service — 12-round tool loop.
+/// Android Function Calling Service 鈥?12-round tool loop.
 /// </summary>
 public class FunctionCallingService
 {
@@ -72,16 +72,51 @@ public class FunctionCallingService
                 }
             }
         }
-        return "任务完成。";
+        return "Task complete.";
     }
 
     private async Task<(string Content, List<ToolCall>? ToolCalls)> CallLlmWithToolsAsync(List<ChatMessage> messages)
     {
         var config = ConfigManager.Load();
+        var toolsJson = _tools.GetAll().Select(t => new {
+            type = "function",
+            function = new {
+                name = t.Name,
+                description = t.Description,
+                parameters = new { type = "object", properties = t.Parameters.ToDictionary(p => p.Name, p => new { type = p.Type, description = p.Description }) }
+            }
+        });
+
         var response = new System.Text.StringBuilder();
         await foreach (var chunk in _llm.StreamChatAsync(messages, ""))
             response.Append(chunk);
-        return (response.ToString(), null);
+
+        var content = response.ToString();
+        var toolCalls = ParseToolCalls(content);
+        return (content, toolCalls);
+    }
+
+    private List<ToolCall>? ParseToolCalls(string response)
+    {
+        // Try to parse tool_calls from LLM response
+        try
+        {
+            var doc = JsonDocument.Parse(response);
+            if (doc.RootElement.TryGetProperty("tool_calls", out var calls))
+            {
+                var list = new List<ToolCall>();
+                foreach (var call in calls.EnumerateArray())
+                {
+                    list.Add(new ToolCall {
+                        Name = call.GetProperty("function").GetProperty("name").GetString() ?? "",
+                        Arguments = call.GetProperty("function").GetProperty("arguments").GetString() ?? "{}"
+                    });
+                }
+                return list.Count > 0 ? list : null;
+            }
+        }
+        catch { }
+        return null;
     }
 }
 
@@ -92,24 +127,21 @@ public class ToolCall
 }
 
 /// <summary>
-/// Android Capability Registry — declares all AI capabilities.
+/// Android Capability Registry 鈥?declares all AI capabilities.
 /// </summary>
 public class CapabilityRegistry
 {
     public static string BuildSystemPrompt(AppConfig config)
     {
-        return @"你是 FairyAI，一个功能强大的个人AI助手。你拥有以下能力，根据用户需求自主选择工具：
+        return @"浣犳槸 FairyAI锛屼竴涓姛鑳藉己澶х殑涓汉AI鍔╂墜銆備綘鎷ユ湁浠ヤ笅鑳藉姏锛屾牴鎹敤鎴烽渶姹傝嚜涓婚€夋嫨宸ュ叿锛?
+## 鏍稿績鑳藉姏
+1. 灞忓箷鑷姩鍖? 鎴睆銆佺偣鍑汇€佽緭鍏ャ€佹寜閿?2. 璇煶鍚堟垚: TTS璇煶鍏嬮殕
+3. 鐭ヨ瘑搴? 鏂囨。鍒嗘瀽銆佺瑪璁扮鐞?4. 鑱旂綉鎼滅储: Web鎼滅储
+5. 绯荤粺宸ュ叿: 鏃堕棿銆佽绠椼€佸簲鐢ㄦ墦寮€
+6. 缈昏瘧: 澶氳瑷€缈昏瘧
+7. 鎻愰啋: 鏃ョ▼绠＄悊
 
-## 核心能力
-1. 屏幕自动化: 截屏、点击、输入、按键
-2. 语音合成: TTS语音克隆
-3. 知识库: 文档分析、笔记管理
-4. 联网搜索: Web搜索
-5. 系统工具: 时间、计算、应用打开
-6. 翻译: 多语言翻译
-7. 提醒: 日程管理
-
-## 人格设定
+## 浜烘牸璁惧畾
 " + config.Personality.SystemPrompt;
     }
 
@@ -123,3 +155,4 @@ public class CapabilityRegistry
         });
     }
 }
+
