@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using FairyAI_Android.Models;
 
@@ -78,22 +78,59 @@ public class FunctionCallingService
     private async Task<(string Content, List<ToolCall>? ToolCalls)> CallLlmWithToolsAsync(List<ChatMessage> messages)
     {
         var config = ConfigManager.Load();
-        var toolsJson = _tools.GetAll().Select(t => new {
+        // Build tools definition for OpenAI-compatible API
+        var toolsDef = _tools.GetAll().Select(t => new {
             type = "function",
             function = new {
                 name = t.Name,
                 description = t.Description,
-                parameters = new { type = "object", properties = t.Parameters.ToDictionary(p => p.Name, p => new { type = p.Type, description = p.Description }) }
+                parameters = new { type = "object", properties = new { } }
             }
-        });
+        }).ToArray();
 
-        var response = new System.Text.StringBuilder();
-        await foreach (var chunk in _llm.StreamChatAsync(messages, ""))
-            response.Append(chunk);
+        // Use non-streaming HTTP request to get complete JSON with tool_calls
+        try
+        {
+            var payload = System.Text.Json.JsonSerializer.Serialize(new {
+                model = config.LLM.Model,
+                messages = messages.Select(m => new { role = m.Role, content = m.Content }).ToArray(),
+                max_tokens = 1000,
+                tools = toolsDef
+            });
 
-        var content = response.ToString();
-        var toolCalls = ParseToolCalls(content);
-        return (content, toolCalls);
+            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var req = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Post, config.LLM.BaseUrl)
+            {
+                Content = new System.Net.Http.StringContent(payload, System.Text.Encoding.UTF8, "application/json")
+            };
+            if (!string.IsNullOrWhiteSpace(config.LLM.ApiKey))
+                req.Headers.Add("Authorization", $"Bearer {config.LLM.ApiKey}");
+
+            using var resp = await http.SendAsync(req);
+            var body = await resp.Content.ReadAsStringAsync();
+            var doc = System.Text.Json.JsonDocument.Parse(body);
+            var msg = doc.RootElement.GetProperty("choices")[0].GetProperty("message");
+            var content = msg.GetProperty("content").GetString() ?? "";
+
+            List<ToolCall>? toolCalls = null;
+            if (msg.TryGetProperty("tool_calls", out var calls) && calls.GetArrayLength() > 0)
+            {
+                toolCalls = new List<ToolCall>();
+                foreach (var call in calls.EnumerateArray())
+                {
+                    toolCalls.Add(new ToolCall {
+                        Name = call.GetProperty("function").GetProperty("name").GetString() ?? "",
+                        Arguments = call.GetProperty("function").GetProperty("arguments").GetString() ?? "{}"
+                    });
+                }
+            }
+
+            return (content, toolCalls);
+        }
+        catch (Exception ex)
+        {
+            return ($"LLM error: {ex.Message}", null);
+        }
     }
 
     private List<ToolCall>? ParseToolCalls(string response)
