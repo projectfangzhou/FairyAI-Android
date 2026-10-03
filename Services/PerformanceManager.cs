@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 
 namespace FairyAI_Android.Services;
 
@@ -17,9 +17,32 @@ public class PerformanceManager
 
     public bool IsHeavyAppRunning()
     {
-        // Android: check foreground app via UsageStatsManager
-        Log("Checking heavy apps");
-        return false; // Simplified - real impl uses UsageStatsManager
+        try
+        {
+            // Use ActivityManager to check running processes
+            var am = Android.App.Application.Context.GetSystemService(Android.Content.Context.ActivityService) as Android.App.ActivityManager;
+            if (am != null)
+            {
+                var processes = am.RunningAppProcesses;
+                if (processes != null)
+                {
+                    foreach (var p in processes)
+                    {
+                        var name = p.ProcessName ?? "";
+                        if (HeavyApps.Any(h => name.Contains(h, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            Log($"Heavy app detected: {name}");
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public HashSet<string> GetDisabledFeatures()
@@ -43,3 +66,4 @@ public class PerformanceManager
         try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss}] [PERF] {msg}\n"); } catch { }
     }
 }
+
