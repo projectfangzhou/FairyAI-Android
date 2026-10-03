@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 
@@ -139,3 +139,4 @@ public class LlmService : ILlmService
         try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss}] [LLM] {msg}\n"); } catch { }
     }
 }
+
